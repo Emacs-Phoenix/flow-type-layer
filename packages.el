@@ -13,17 +13,13 @@
   '(company
     (company-flow :toggle (configuration-layer/package-usedp 'company))
     (flycheck-flow :toggle (configuration-layer/package-usedp 'flycheck))
-    js2-mode
     web-mode))
-
-(defun flow-type/post-init-js2-mode()
-  (push 'flow-type/init-mode js2-mode-hook))
 
 (defun flow-type/post-init-web-mode()
   (push 'flow-type/init-mode react-mode-hook))
 
 (defun flow-type/post-init-company()
-  (spacemacs|add-company-hook js2-mode)
+  (spacemacs|add-company-hook react-mode)
   (when (configuration-layer/layer-usedp 'react)
     (spacemacs|add-company-hook react-mode)))
 
@@ -32,12 +28,12 @@
     :defer t
     :init
     (progn
-       (push 'company-flow company-backends-js2-mode)
-       (when (configuration-layer/package-usedp 'web-mode)
-         (push 'company-flow company-backends-react-mode))
+      (push 'company-flow company-backends-react-mode)
+      (when (configuration-layer/package-usedp 'react-mode)
+        (push 'company-flow company-backends-react-mode))
     )
     :config
-    (when (configuration-layer/package-usedp 'web-mode)
+    (when (configuration-layer/package-usedp 'react-mode)
       (push 'react-mode company-flow-modes)))
   )
 
@@ -49,7 +45,11 @@
         ;; Don't run flow if there's no @flow pragma
         (custom-set-variables '(flycheck-javascript-flow-args (quote ("--respect-pragma"))))
         ;; Run flow in react-mode files
-        (flycheck-add-mode 'javascript-flow 'react-mode)
+        (with-eval-after-load 'flycheck
+          (dolist (checker '(javascript-eslint javascript-flow javascript-standard))
+            (flycheck-add-mode checker 'react-mode))
+         )
+
         ;; Run flow after eslint
-        (flycheck-add-next-checker 'javascript-eslint 'javascript-flow))
+        (flycheck-add-next-checker 'javascript-flow 'javascript-eslint))
       )))
